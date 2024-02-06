@@ -1,0 +1,21 @@
+{
+  "name": "notomation",
+  "version": "1.0.0",
+  "description": "Automation for getting info from Notion to TickTick",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "keywords": [],
+  "author": "batunii",
+  "license": "ISC",
+  "dependencies": {
+    "@notionhq/client": "^2.2.13",
+    "axios": "^1.6.7",
+    "bson-objectid": "^2.0.4",
+    "dotenv": "^16.3.1",
+    "jsdoc": "^4.0.2",
+    "nodemon": "^3.0.1"
+  }
+}
