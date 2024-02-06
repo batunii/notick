@@ -10,9 +10,10 @@ const notion = new Client({
 const projectDatabseId = process.env.NOTION_DATABASE_ID;
 
 // Getting yesterday's Date
-let today = new Date();
-let tomorrow = new Date();
+let today = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+let tomorrow = today;
 tomorrow.setDate(tomorrow.getDate() + 1);
+console.log(today.toISOString());
 tomorrow = tomorrow.toISOString().slice(0, 10);
 //today.setDate(today.getDate() - 1)
 //today = today.toISOString().slice(0, 10);
