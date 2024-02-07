@@ -89,7 +89,9 @@ async function postTask(task) {
   */
 
 function differenceOfDays(date1, date2) {
+  date2.setTime(date2.getTime() + (330 * 60 * 1000));
+  console.log("Date 2 is: ", date2.toISOString());
   const oneDay = 1000 * 60 * 60 * 24;
   const difference = Math.abs(date1 - date2);
-  return Math.round(difference / oneDay);
+  return Math.ceil(difference / oneDay);
 }
