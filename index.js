@@ -9,20 +9,18 @@ const notion = new Client({
 });
 const projectDatabseId = process.env.NOTION_DATABASE_ID;
 
-// Getting yesterday's Date
+// Getting today's and tomorrow's date
 let today = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-let tomorrow = today;
+let tomorrow = new Date(today);
 tomorrow.setDate(tomorrow.getDate() + 1);
-console.log(today.toISOString());
+console.log("Todays's date is : ", today.toISOString());
 tomorrow = tomorrow.toISOString().slice(0, 10);
-//today.setDate(today.getDate() - 1)
-//today = today.toISOString().slice(0, 10);
 
 //List of elements
 let new_elements = [];
 
-//Querying Database for Last day's tasks
-async function queryDatabase(databaseId, project) {
+//Querying Database for Tasks that are in progress and have Yes for TickTick propertry
+async function queryDatabase(databaseId) {
   try {
     const response = await notion.databases.query({
       database_id: databaseId,
@@ -46,16 +44,13 @@ async function queryDatabase(databaseId, project) {
     console.log(error.body);
   }
 }
-queryDatabase(projectDatabseId, today.toString()).then(results => {
-  //console.log(results);
+queryDatabase(projectDatabseId).then(results => {
   results.forEach(result => {
-    console.log(result.properties.Tasks.title[0].plain_text);
-    console.log(result.properties['Created time'].created_time);
-    //new_elements.push(result.properties.Tasks.title[0].plain_text);
+    console.log("Name of the Task ", result.properties.Tasks.title[0].plain_text);
+    console.log("Day this task was created ", result.properties['Created time'].created_time);
     task = {
       title: result.properties.Tasks.title[0].plain_text + " Day " + differenceOfDays(new Date(result.properties['Created time'].created_time), today),
       projectId: notion_proj_id,
-      //dueDate: today.toISOString().slice(0, 10),
       dueDate: result.properties['Due Date'].date?.start ? `${result.properties['Due Date'].date?.start}T00:01:00+0530` :
         `${today.toISOString().slice(0, 10)}T23:59:59+0530`
     }
@@ -70,35 +65,17 @@ queryDatabase(projectDatabseId, today.toString()).then(results => {
     }
   )
 });
-console.log("Hello From Here");
 
+let notion_proj_id = process.env.TICK_TICK_PROJECT_ID
 
-
-
-
-//let project_url = "https://api.ticktick.com/open/v1/project"
-//axios.get(project_url, {
-//  headers: {
-//    authorization: 'Bearer 27501286-83f9-4506-9974-7cc51065e174'
-//  }
-//}).then((response) => console.log(response.data)).catch((error) => console.log(error));
-//
-let notion_proj_id = '65be991d8f08b60d6dc77e5d'
-//let task_id = '65be99474861ed257620eb06'
 let auth_headers = {
-  authorization: 'Bearer 27501286-83f9-4506-9974-7cc51065e174'
+  authorization: process.env.TICK_TICK_AUTH_CODE
 }
-//let uri = `${project_url}/${notion_proj_id}`
-//axios.get(uri, {
-//  headers: {
-//    authorization: 'Bearer 27501286-83f9-4506-9974-7cc51065e174'
-//  }
-//}).then((response) => console.log(response.data)).catch((error) => console.log(error));
-//
-//let body = {
-//  "title": "New Task",
-//  "projectId": notion_proj_id
-//}
+
+/**
+ * @param a task task body for TickTick
+ * @returns a promise 
+ */
 
 async function postTaks(task_body) {
   let res = await axios.post(`https://api.ticktick.com/open/v1/task`, task_body,
@@ -108,15 +85,12 @@ async function postTaks(task_body) {
   let data = res.data;
   console.log(data);
 }
-time_body = {
 
-  title: "New Test Task",
-  projectId: notion_proj_id,
-  startDate: "2024-02-03T13:00:00+0530",
-  dueDate: "2024-02-05T13:00:00+0530"
-};
-//postTaks(time_body).then(response => console.log(response)).catch(error => console.log(error));
-
+/**
+  * @param date1 date2
+  * Uses the dates to calculate difference between them
+  * @returns number - difference of the toDateString()
+  */
 
 function differenceOfDays(date1, date2) {
   const oneDay = 1000 * 60 * 60 * 24;
