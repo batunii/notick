@@ -19,6 +19,13 @@ tomorrow = tomorrow.toISOString().slice(0, 10);
 //List of elements
 let new_elements = [];
 
+
+/**
+ * @function
+ * @param {1} databaseId - Id of the database you want to query from notion
+ * @returns a promise
+ */
+
 //Querying Database for Tasks that are in progress and have Yes for TickTick propertry
 async function queryDatabase(databaseId) {
   try {
