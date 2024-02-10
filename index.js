@@ -58,8 +58,10 @@ queryDatabase(projectDatabseId).then(results => {
   results.forEach(result => {
     console.log("Name of the Task ", result.properties.Tasks.title[0].plain_text);
     console.log("Day this task was created ", result.properties['Created time'].created_time);
+    console.log(result.properties['Start Date'])
     let task = {
-      title: result.properties.Tasks.title[0].plain_text + " Day " + differenceOfDays(new Date(result.properties['Created time'].created_time), today),
+      title: result.properties['Start Date'].date?.start ? result.properties.Tasks.title[0].plain_text + " Day " + differenceOfDays(new Date(result.properties['Start Date'].date?.start), today)
+        : result.properties.Tasks.title[0].plain_text + " Day " + differenceOfDays(new Date(result.properties['Created time'].created_time), today),
       projectId: notion_proj_id,
       dueDate: result.properties['Due Date'].date?.start ? `${result.properties['Due Date'].date?.start}T00:01:00+0530` :
         `${today.toISOString().slice(0, 10)}T23:59:59+0530`,
