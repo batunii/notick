@@ -58,7 +58,7 @@ queryDatabase(projectDatabseId).then(results => {
   results.forEach(result => {
     console.log("Name of the Task ", result.properties.Tasks.title[0].plain_text);
     console.log("Day this task was created ", result.properties['Created time'].created_time);
-    console.log(result.properties['Start Date'])
+    console.log("Day this task was started ", result.properties['Start Date'].date?.start);
     let task = {
       title: result.properties['Start Date'].date?.start ? result.properties.Tasks.title[0].plain_text + " Day " + differenceOfDays(new Date(result.properties['Start Date'].date?.start), today)
         : result.properties.Tasks.title[0].plain_text + " Day " + differenceOfDays(new Date(result.properties['Created time'].created_time), today),
