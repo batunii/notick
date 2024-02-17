@@ -2,7 +2,9 @@ const { Client } = require("@notionhq/client");
 const dotenv = require("dotenv");
 const axios = require("axios");
 dotenv.config();
-
+let morgenAPIId = process.env.MORGEN_API_ID;
+let accountId = process.env.ACCOUNT_ID;
+let calendarId = process.env.CALENDAR_ID;
 
 // Initializing a client
 const notion = new Client({
@@ -23,11 +25,11 @@ tomorrow = tomorrow.toISOString().slice(0, 10);
 
 
 /**
- * @function
- * @param {number} databaseId - Id of the database you want to query from notion
- * Filters the result based on if they are in progress and if the TickTick Id is YES 
- * @returns a promise
- */
+* @function
+* @param {number} databaseId - Id of the database you want to query from notion
+* Filters the result based on if they are in progress and if the TickTick Id is YES 
+* @returns a promise
+*/
 
 async function queryDatabase(databaseId) {
   try {
@@ -56,6 +58,7 @@ async function queryDatabase(databaseId) {
 
 queryDatabase(projectDatabseId).then(results => {
   results.forEach(result => {
+    console.log(result.properties['Morgen Reminder']?.select?.name || "Nothing");
     console.log("Name of the Task ", result.properties.Tasks.title[0].plain_text);
     console.log("Day this task was created ", result.properties['Created time'].created_time);
     console.log("Day this task was started ", result.properties['Start Date'].date?.start);
@@ -68,14 +71,20 @@ queryDatabase(projectDatabseId).then(results => {
     };
     console.log(task);
     postTask(task);
+    if (result.properties['Morgen Reminder'].select?.name) {
+      let taskTitle = task.title;
+      let taskTime = result.properties['Morgen Reminder']?.select?.name
+      let event = createEvent(taskTitle, taskTime);
+      postEvent(event);
+    }
   })
 }).catch(error => console.log(error));
 
 /**
- * @function
- * @param {object} task 
- * @returns void promise
- */
+* @function
+* @param {object} task 
+* @returns void promise
+*/
 
 async function postTask(task) {
   let resp = await axios.post(`https://api.ticktick.com/open/v1/task`, task, {
@@ -97,3 +106,45 @@ function differenceOfDays(date1, date2) {
   const difference = Math.abs(date1 - date2);
   return Math.ceil(difference / oneDay);
 }
+
+
+
+(async function getId() {
+  let resp = await axios.get("https://api.morgen.so/v3/calendars/list",
+    {
+      headers: {
+        "accept": "application/json",
+        "Authorization": "ApiKey T4q4tasQT2mWfD3fP017kRhBh0qWvfUCemcrvYFS9WU=",
+      }
+    })
+
+  console.log(resp.data.data);
+})
+
+
+function createEvent(taskTitle, taskTime) {
+  return {
+    accountId: accountId,
+    calendarId: calendarId,
+    title: taskTitle,
+    start: `${today.toISOString().slice(0, 10)}T${taskTime}:00`,
+    duration: "PT120M",
+    timeZone: "Asia/Kolkata",
+    showWithoutTime: false,
+    privacy: "public",
+    freeBusyStatus: "busy"
+  };
+}
+async function postEvent(event) {
+  let resp = await axios.post("https://api.morgen.so/v3/events/create", event,
+    {
+      headers: {
+        "accept": "application/json",
+        "Authorization": `ApiKey ${morgenAPIId}`,
+      }
+    })
+
+  console.log(resp);
+}
+
+
