@@ -114,7 +114,7 @@ function differenceOfDays(date1, date2) {
     {
       headers: {
         "accept": "application/json",
-        "Authorization": "ApiKey T4q4tasQT2mWfD3fP017kRhBh0qWvfUCemcrvYFS9WU=",
+        "Authorization": `ApiKey ${morgenAPIId}`,
       }
     })
 
