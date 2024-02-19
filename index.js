@@ -132,7 +132,12 @@ function createEvent(taskTitle, taskTime) {
     timeZone: "Asia/Kolkata",
     showWithoutTime: false,
     privacy: "public",
-    freeBusyStatus: "busy"
+    freeBusyStatus: "busy",
+    "morgen.so:metadata": {
+      categoryId: '63d75800-958b-4dce-a5f9-21a69bd24357@morgen.so',
+      categoryName: 'Study',
+      categoryColor: '#efb983',
+    }
   };
 }
 async function postEvent(event) {
@@ -144,7 +149,18 @@ async function postEvent(event) {
       }
     })
 
-  console.log(resp);
+  console.log(resp.data.data);
 }
+
+//(async function getEvents() {
+//  let resp = await axios.get(`https://api.morgen.so/v3/events/list?accountId=${accountId}&calendarIds=${calendarId}&start=2024-02-20T00:00:00Z&end=2024-02-21T00:00:00Z`,
+//    {
+//      headers: {
+//        "accept": "application/json",
+//        "Authorization": `ApiKey ${morgenAPIId}`,
+//      }
+//    })
+//  console.log(resp.data.data.events[5]);
+//})();
 
 
