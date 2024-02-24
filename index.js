@@ -78,7 +78,7 @@ queryDatabase(projectDatabseId).then(results => {
       dueDate: `${today.toISOString().slice(0, 10)}T23:59:59+0530`,
     };
     console.log(task);
-    //postTask(task);
+    postTask(task);
     if (result.properties['Morgen Reminder'].select?.name) {
       let taskTitle = task.title;
       let taskTime = result.properties['Morgen Reminder']?.select?.name;
@@ -90,7 +90,7 @@ queryDatabase(projectDatabseId).then(results => {
       let duration = result.properties['Duration']?.number || 60;
       let event = createEvent(taskTitle, taskTime, tag, duration);
       console.log(event);
-      //postEvent(event);
+      postEvent(event);
     }
   })
 }).catch(error => console.log(error));
