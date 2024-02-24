@@ -1,2 +1,2 @@
 # notick
-Its a service that combines the power of Notion and TickTick. 
+Its a service that combines the power of Notion and TickTick.
