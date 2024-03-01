@@ -1,21 +1,14 @@
 const { Client } = require("@notionhq/client");
 const dotenv = require("dotenv");
-const axios = require("axios");
+const {TodoistApi} = require("@doist/todoist-api-typescript")
 dotenv.config();
-let morgenAPIId = process.env.MORGEN_API_ID;
-let accountId = process.env.ACCOUNT_ID;
-let calendarId = process.env.CALENDAR_ID;
 
-// Initializing a client
+//Initializing a client
 const notion = new Client({
   auth: process.env.NOTION_API_KEY,
 });
+const todoistApi = new TodoistApi(process.env.TODOIST_ID)
 const projectDatabseId = process.env.NOTION_DATABASE_ID;
-let notion_proj_id = process.env.TICK_TICK_PROJECT_ID
-
-let auth_headers = {
-  authorization: process.env.TICK_TICK_AUTH_CODE
-}
 
 // Getting today's and tomorrow's date
 let today = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
@@ -23,10 +16,6 @@ let tomorrow = new Date(today);
 tomorrow.setDate(tomorrow.getDate() + 1);
 console.log("Todays's date is : ", today.toISOString());
 tomorrow = tomorrow.toISOString().slice(0, 10);
-
-const Etc_Morgen_id = {categoryId: process.env.ETC_META_ID ,categoryName: 'Etc', categoryColor: '#96ed71'}
-const Work_Morgen_id = {categoryId: process.env.WORK_META_ID ,categoryName: 'Office', categoryColor: '#dbebff'}
-const Study_Morgen_id = {categoryId: process.env.STUDY_META_ID ,categoryName: 'Study', categoryColor: '#efb983'}
 
 /**
 * @function
@@ -44,7 +33,7 @@ async function queryDatabase(databaseId) {
         and: [
           {
             select: { equals: "Yes" },
-            property: "TickTick",
+            property: "Todoist",
             type: "select"
           },
           {
@@ -62,51 +51,36 @@ async function queryDatabase(databaseId) {
 
 queryDatabase(projectDatabseId).then(results => {
   results.forEach(result => {
-    console.log(result.properties.Area.select?.name);
+    result.properties.Area.multi_select.forEach(area=>console.log(area.name));
     console.log(result.properties['Duration'].number);
-    console.log(result.properties['Morgen Reminder']?.select?.name || "Nothing");
+    console.log(result.properties['Reminder Time']?.select?.name || "Nothing");
     console.log("Name of the Task ", result.properties.Tasks.title[0].plain_text);
     console.log("Day this task was created ", result.properties['Created time'].created_time);
     console.log("Day this task was started ", result.properties['Start Date'].date?.start);
-    let task = {
-      title: result.properties['Due Date'].date?.start?
+    let title =  result.properties['Due Date'].date?.start?
       result.properties.Tasks.title[0].plain_text + " "+ differenceOfDays(new Date(result.properties['Due Date'].date?.start), today) + " days left"
       :result.properties['Start Date'].date?.start?
       result.properties.Tasks.title[0].plain_text + " Day " + differenceOfDays(new Date(result.properties['Start Date'].date?.start), today)
-      :result.properties.Tasks.title[0].plain_text + " Day " + differenceOfDays(new Date(result.properties['Created time'].created_time), today),
-      projectId: notion_proj_id,
-      dueDate: `${today.toISOString().slice(0, 10)}T23:59:59+0530`,
-    };
-    console.log(task);
-    postTask(task);
-    if (result.properties['Morgen Reminder'].select?.name) {
-      let taskTitle = task.title;
-      let taskTime = result.properties['Morgen Reminder']?.select?.name;
-      let tag = 
-      result.properties.Area.select?.name == "Work"? Work_Morgen_id 
-      :result.properties.Area.select?.name =="Study"? Study_Morgen_id 
-      :result.properties.Area.select?.name =="Etc" ? Etc_Morgen_id 
-      : null; 
-      let duration = result.properties['Duration']?.number || 60;
-      let event = createEvent(taskTitle, taskTime, tag, duration);
-      console.log(event);
-      postEvent(event);
-    }
+      :result.properties.Tasks.title[0].plain_text + " Day " + differenceOfDays(new Date(result.properties['Created time'].created_time), today);
+    let labels = []
+    result.properties.Area.multi_select.forEach(area=>labels.push(area.name));
+
+    todoistApi.addTask(
+      {
+        content: title,
+        projectId: process.env.TODOIST_KRIMIZ_ID,
+        dueString: result.properties['Reminder Time'].select?.name?`today at ${result.properties['Reminder Time'].select?.name}`:'today',
+        labels: isEmpty(labels),
+        duration: result.properties['Duration']?.number || null,
+        durationUnit: result.properties['Duration']?.number?"minute":null
+    
+      }
+    ).then((task)=> console.log(task))
+    .catch((error)=> console.log(error));
+
   })
 }).catch(error => console.log(error));
 
-/**
-* @function
-* @param {object} task 
-* @returns void promise
-*/
-
-async function postTask(task) {
-  let resp = await axios.post(`https://api.ticktick.com/open/v1/task`, task, {
-    headers: auth_headers
-  })
-  console.log(resp.data);
-}
 
 /**
   * @param date1 date2
@@ -122,56 +96,13 @@ function differenceOfDays(date1, date2) {
   return Math.ceil(difference / oneDay);
 }
 
-
-
-(async function getId() {
-  let resp = await axios.get("https://api.morgen.so/v3/calendars/list",
-    {
-      headers: {
-        "accept": "application/json",
-        "Authorization": `ApiKey ${morgenAPIId}`,
-      }
-    })
-
-  console.log(resp.data.data);
-})
-
-
-function createEvent(taskTitle, taskTime, tag, duration) {
-  return {
-    accountId: accountId,
-    calendarId: calendarId,
-    title: taskTitle,
-    start: `${today.toISOString().slice(0, 10)}T${taskTime}:00`,
-    duration: `PT${duration}M`,
-    timeZone: "Asia/Kolkata",
-    showWithoutTime: false,
-    privacy: "public",
-    freeBusyStatus: "busy",
-    "morgen.so:metadata": tag,
-  };
+/**
+ * 
+ * @param {Array} labels 
+ * If array is empty returns null, if not returns the array
+ * @returns null or the array itself
+ */
+function isEmpty(labels)
+{
+  return labels.length==0?null:labels
 }
-async function postEvent(event) {
-  let resp = await axios.post("https://api.morgen.so/v3/events/create", event,
-    {
-      headers: {
-        "accept": "application/json",
-        "Authorization": `ApiKey ${morgenAPIId}`,
-      }
-    })
-
-  console.log(resp.data.data);
-}
-
-// (async function getEvents() {
-//  let resp = await axios.get(`https://api.morgen.so/v3/events/list?accountId=${accountId}&calendarIds=${calendarId}&start=2024-02-20T00:00:00Z&end=2024-02-21T00:00:00Z`,
-//    {
-//      headers: {
-//        "accept": "application/json",
-//        "Authorization": `ApiKey ${morgenAPIId}`,
-//      }
-//    })
-//  console.log(resp.data.data.events[1]);
-// })();
-
-
