@@ -11,6 +11,7 @@
   "author": "batunii",
   "license": "ISC",
   "dependencies": {
+    "@doist/todoist-api-typescript": "^3.0.2",
     "@notionhq/client": "^2.2.14",
     "axios": "^1.6.7",
     "dotenv": "^16.3.1",
