@@ -14,6 +14,7 @@ exports.handler = async (event) => {
   const todoistApi = new TodoistApi(process.env.TODOIST_ID)
 
   let tasks = [];
+  let results = [];
 
   // Getting today's and tomorrow's date
   let today = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
@@ -66,7 +67,7 @@ exports.handler = async (event) => {
       let labels = [];
       result.properties.Area.multi_select.forEach(area=>labels.push(area.name));
       tasks.push({
-      title :  result.properties['Due Date'].date?.start?
+      content :  result.properties['Due Date'].date?.start?
       result.properties.Tasks.title[0].plain_text + " "+ differenceOfDays(new Date(result.properties['Due Date'].date?.start), today) + " days left"
       :result.properties['Start Date'].date?.start?
       result.properties.Tasks.title[0].plain_text + " Day " + differenceOfDays(new Date(result.properties['Start Date'].date?.start), today)
@@ -80,9 +81,13 @@ exports.handler = async (event) => {
 
 
   for (let i = 0; i < tasks.length; i++) {
-    todoistApi.addTask(tasks[i]).then((task)=> console.log(task))
+    await todoistApi.addTask(tasks[i]).then((task)=> console.log(task))
     .catch((error)=> console.log(error));
-    console.log("Post done for ", tasks[i].title)
+    console.log("Post done for ", tasks[i].content);
+    results.push({
+      task: tasks[i].content,
+      status: "pushed",
+    })
   }
   /**
     * @param date1 date2
@@ -108,4 +113,5 @@ function isEmpty(labels)
 {
   return labels.length==0?null:labels
 }
+return results; 
 }
